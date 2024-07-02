@@ -4,6 +4,7 @@ import string
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import BotCommand
+from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring
 from user_utils import load_users, save_users
@@ -67,8 +68,26 @@ async def notify_all_users(bot: Bot, message: str):
         except Exception as e:
             logging.error(f"Failed to send message to {user_id}: {e}")
 
+# async def send_welcome(message: types.Message):
+#     await message.answer('Добро пожаловать!\n'
+#                          'Для слежения за новой группой:\n'
+#                          'добавьте ключевые слова /add_keyword ***\n'
+#                          'добавьте группу /add_group *****\n'
+#                          '(используйте ссылку на одно из последних сообщений в группе)\n'
+#                          'нажмите Начать слежение /start_monitoring\n'
+#                          'Используйте /help для просмотра всех доступных команд.')
+
 async def send_welcome(message: types.Message):
-    await message.answer("Добро пожаловать! Используйте /help для просмотра доступных команд.")
+    welcome_message = (
+        '<b>Добро пожаловать!</b>\n'
+        'Для слежения за новой группой:\n'
+        '<b>добавьте ключевые слова</b> /add_keyword ***\n'
+        '<b>добавьте группу</b> /add_group *****\n'
+        '(вставьте ссылку на запись в группе с которой начнется поиск)\n'
+        'нажмите <b>Начать слежение</b> /start_monitoring\n'
+        'Используйте /help для просмотра всех доступных команд.'
+    )
+    await message.answer(welcome_message, parse_mode=ParseMode.HTML)
 
 async def send_help(message: types.Message):
     help_text = (
@@ -174,7 +193,7 @@ async def list_groups(message: types.Message):
         return
 
     groups = load_groups()
-    group_names = [group["name"] for group in groups]
+    group_names = [group["name", "url"] for group in groups]
     await message.answer(f"Группы:\n" + "\n".join(group_names))
 
 async def start_monitoring_command(message: types.Message):

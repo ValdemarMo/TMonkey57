@@ -6,6 +6,7 @@ import logging
 from aiogram import Bot
 from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key
 import datetime
+from aiogram.enums import ParseMode
 
 
 # Инициализация бота
@@ -96,11 +97,10 @@ async def monitor(callback, etimer = 0, timer=None):
                         save_additional_data(data)
 
                         message = (
-                            f"URL: {url}\n"
-                            f"Время: {timestamp}\n"
-                            f"Группа: {og_title}\n"
-                            f"Запись: {og_description}\n"
-                            f"Обнаружено: {', '.join(found_keywords)}"
+                            f"Обнаружено: {', '.join(found_keywords)}\n"
+                            f"{url}\n"
+                            f"{og_title}\n"
+                            f"Запись:\n {og_description}\n"
                         )
                         await callback(message)
 
