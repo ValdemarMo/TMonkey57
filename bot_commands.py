@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import BotCommand
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring
+from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring,monitoring
 from user_utils import load_users, save_users
 from config import TELEGRAM_BOT_TOKEN, OWNER_ID
 
@@ -24,6 +24,7 @@ async def setup_bot_commands(bot: Bot):
         BotCommand(command="/list_groups", description="Показать список групп"),
         BotCommand(command="/start_monitoring", description="Начать слежение"),
         BotCommand(command="/stop_monitoring", description="Завершить слежение"),
+        BotCommand(command="/check_monitoring", description="Проверить состояние слежения"),
         BotCommand(command="/clear_keywords", description="Очистить список ключевых слов"),
         BotCommand(command="/clear_groups", description="Очистить список групп"),
         BotCommand(command="/add_user", description="Добавить пользователя \n(только для администратора)"),
@@ -45,6 +46,7 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     dp.message.register(list_groups, Command(commands=["list_groups"]))
     dp.message.register(start_monitoring_command, Command(commands=["start_monitoring"]))
     dp.message.register(stop_monitoring_command, Command(commands=["stop_monitoring"]))
+    dp.message.register(check_monitoring_command, Command(commands=["check_monitoring"]))
     dp.message.register(clear_keywords, Command(commands=["clear_keywords"]))
     dp.message.register(clear_groups, Command(commands=["clear_groups"]))
     dp.message.register(add_user, Command(commands=["add_user"]))
@@ -82,6 +84,7 @@ async def send_welcome(message: types.Message):
         '<b>Добро пожаловать!</b>\n'
         'Для слежения за новой группой:\n'
         '<b>добавьте ключевые слова</b> /add_keyword ***\n'
+        '(вставьте слова и фразы через запятую)\n'
         '<b>добавьте группу</b> /add_group *****\n'
         '(вставьте ссылку на запись в группе с которой начнется поиск)\n'
         'нажмите <b>Начать слежение</b> /start_monitoring\n'
@@ -99,6 +102,7 @@ async def send_help(message: types.Message):
         "/list_groups - Показать список групп\n"
         "/start_monitoring - Начать слежение\n"
         "/stop_monitoring - Завершить слежение\n"
+        "/check_monitoring - Проверка слежения\n"
         "/clear_keywords - Очистить список ключевых слов\n"
         "/clear_groups - Очистить список групп\n"
         "/add_user - Добавить пользователя\n(только для администратора)\n"
@@ -211,6 +215,15 @@ async def stop_monitoring_command(message: types.Message):
 
     await message.answer("Остановка слежения...")
     stop_monitoring()
+async def check_monitoring_command(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+    global monitoring
+    print(monitoring)
+    check_message = "поиск не запущен"
+    if monitoring: check_message="ведется поиск"
+    await message.answer(check_message)
 
 async def clear_keywords(message: types.Message):
     if not user_is_authorized(message.from_user.id):
