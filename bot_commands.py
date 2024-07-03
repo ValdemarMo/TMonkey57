@@ -66,7 +66,8 @@ async def notify_all_users(bot: Bot, message: str):
     users = load_users()
     for user_id in users:
         try:
-            await bot.send_message(user_id, message, disable_web_page_preview = True)
+            await bot.send_message(user_id, message, disable_web_page_preview = True,
+                                   parse_mode=ParseMode.HTML)
         except Exception as e:
             logging.error(f"Failed to send message to {user_id}: {e}")
 
@@ -116,25 +117,46 @@ async def add_keyword(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
-
+    if message.text == '/add_keyword':
+        await message.answer(f"<b>вы не ввели ключевые слова</b> \n(списком через запятую), попробуйте ещё раз",
+                             parse_mode=ParseMode.HTML)
+        return
     keywords = load_keywords()
     new_keywords_text = message.text.split(maxsplit=1)[1]
     new_keywords = [kw.strip().replace('_', ' ').translate(str.maketrans('', '', string.punctuation)) for kw in new_keywords_text.split(',')]
     keywords.extend(new_keywords)
     save_keywords(keywords)
-    await notify_all_users(message.bot, f"Добавлены ключевые слова:\n" + "\n".join(new_keywords))
+    await notify_all_users(message.bot, f"<b>Добавлены ключевые слова:</b>\n" + "\n".join(new_keywords))
 
 async def remove_keyword(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
-
+    if message.text == '/remove_keyword':
+        await message.answer(f"<b>вы не ввели ключевые слова</b> \n(списком через запятую), попробуйте ещё раз",
+                             parse_mode=ParseMode.HTML)
     keywords = load_keywords()
     remove_keywords_text = message.text.split(maxsplit=1)[1]
     remove_keywords = [kw.strip().replace('_', ' ').translate(str.maketrans('', '', string.punctuation)) for kw in remove_keywords_text.split(',')]
     keywords = [kw for kw in keywords if kw not in remove_keywords]
     save_keywords(keywords)
-    await notify_all_users(message.bot, f"Удалены ключевые слова:\n" + "\n".join(remove_keywords))
+    await notify_all_users(message.bot, f"<b>Удалены ключевые слова:</b>\n" + "\n".join(remove_keywords))
+
+async def remove_group(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+    if message.text == '/remove_group':
+        await message.answer("<b>вы не ввели группу</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+                             parse_mode=ParseMode.HTML)
+        return
+    groups = load_groups()
+    # remove_names_text = message.text.split()[1:]
+    # remove_names = message.text
+    remove_names = [groups.strip() for groups in message.text]
+    groups = [group for group in groups if group["name"] not in remove_names]
+    save_groups(groups)
+    await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
 
 async def list_keywords(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -142,11 +164,17 @@ async def list_keywords(message: types.Message):
         return
 
     keywords = load_keywords()
-    await message.answer(f"Ключевые слова:\n" + "\n".join(keywords))
+    await message.answer(f"<b>Ключевые слова:</b>\n" + "\n".join(keywords),
+                         parse_mode=ParseMode.HTML)
 
 async def add_group(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+
+    if message.text == '/add_group':
+        await message.answer("<b>вы не ввели ссылку на сообщение в группе</b>, \nпопробуйте ещё раз",
+                         parse_mode=ParseMode.HTML)
         return
 
     url = message.text.split()[1]
@@ -176,20 +204,20 @@ async def add_group(message: types.Message):
 
         save_groups(groups)
 
-        await notify_all_users(message.bot, f"Добавлена группа: {og_title}")
+        await notify_all_users(message.bot, f"<b>Добавлена группа:</b> \n{og_title}")
     except requests.RequestException as e:
         await message.answer(f"Ошибка при добавлении группы: {e}")
 
-async def remove_group(message: types.Message):
-    if not user_is_authorized(message.from_user.id):
-        await message.answer("У вас нет прав на выполнение этой команды.")
-        return
-
-    groups = load_groups()
-    remove_names = message.text.split()[1:]
-    groups = [group for group in groups if group["name"] not in remove_names]
-    save_groups(groups)
-    await notify_all_users(message.bot, f"Удалены группы:\n" + "\n".join(remove_names))
+# async def remove_group(message: types.Message):
+#     if not user_is_authorized(message.from_user.id):
+#         await message.answer("У вас нет прав на выполнение этой команды.")
+#         return
+#
+#     groups = load_groups()
+#     remove_names = message.text.split()[1:]
+#     groups = [group for group in groups if group["name"] not in remove_names]
+#     save_groups(groups)
+#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
 
 async def list_groups(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -197,8 +225,9 @@ async def list_groups(message: types.Message):
         return
 
     groups = load_groups()
-    group_names = [group["name", "url"] for group in groups]
-    await message.answer(f"Группы:\n" + "\n".join(group_names))
+    group_names = [group["name"] for group in groups]
+    await message.answer(f"<b>Группы:</b>\n" + "\n".join(group_names),
+                         parse_mode=ParseMode.HTML)
 
 async def start_monitoring_command(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -220,7 +249,6 @@ async def check_monitoring_command(message: types.Message):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
 
-    # check_message = check_monitoring()
     await message.answer(check_monitoring())
 
 async def clear_keywords(message: types.Message):
@@ -229,7 +257,8 @@ async def clear_keywords(message: types.Message):
         return
 
     pending_clear_confirmations[message.from_user.id] = "clear_keywords"
-    await message.answer("Вы уверены, что хотите очистить список ключевых слов? Ответьте 'подтвердить очистку' для подтверждения.")
+    await message.answer("Вы уверены, что <b>хотите очистить список ключевых слов?</b> Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+                         parse_mode=ParseMode.HTML)
 
 async def clear_groups(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -237,12 +266,17 @@ async def clear_groups(message: types.Message):
         return
 
     pending_clear_confirmations[message.from_user.id] = "clear_groups"
-    await message.answer("Вы уверены, что хотите очистить список групп? Ответьте 'подтвердить очистку' для подтверждения.")
+    await message.answer("Вы уверены, что хотите очистить список групп? Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+                         parse_mode=ParseMode.HTML)
 
 async def add_user(message: types.Message):
     if message.from_user.id != OWNER_ID:
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
+
+    if message.text == '/add_user':
+        await message.answer("<b>вы не ввели Telegramm user ID</b>, \nпопробуйте ещё раз",
+                         parse_mode=ParseMode.HTML)
 
     new_user_id = int(message.text.split()[1])
     users = load_users()
@@ -258,14 +292,20 @@ async def remove_user(message: types.Message):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
 
+    if message.text == '/remove_user':
+        await message.answer("<b>вы не ввели Telegramm user ID</b>, \nпопробуйте ещё раз",
+                         parse_mode=ParseMode.HTML)
+
     user_id_to_remove = int(message.text.split()[1])
     users = load_users()
     if user_id_to_remove in users:
         users.remove(user_id_to_remove)
         save_users(users)
-        await message.answer(f"Пользователь {user_id_to_remove} удален.")
+        await message.answer(f"Пользователь <b>{user_id_to_remove}</b> удален.",
+                             parse_mode=ParseMode.HTML)
     else:
-        await message.answer(f"Пользователь {user_id_to_remove} не найден.")
+        await message.answer(f"Пользователь <b>{user_id_to_remove}</b> не найден.",
+                             parse_mode=ParseMode.HTML)
 
 async def clear_users(message: types.Message):
     if message.from_user.id != OWNER_ID:
@@ -273,7 +313,8 @@ async def clear_users(message: types.Message):
         return
 
     pending_clear_confirmations[message.from_user.id] = "clear_users"
-    await message.answer("Вы уверены, что хотите удалить всех пользователей? Ответьте 'подтвердить очистку' для подтверждения.")
+    await message.answer("Вы уверены, что <b>хотите удалить всех пользователей?</b> Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+                         parse_mode=ParseMode.HTML)
 
 async def list_users(message: types.Message):
     if message.from_user.id != OWNER_ID:
@@ -281,7 +322,8 @@ async def list_users(message: types.Message):
         return
 
     users = load_users()
-    await message.answer(f"Пользователи:\n" + "\n".join(map(str, users)))
+    await message.answer(f"<b>Пользователи:</b>\n" + "\n".join(map(str, users)),
+                         parse_mode=ParseMode.HTML)
 
 async def handle_all_messages(message: types.Message):
     if message.from_user.id not in pending_clear_confirmations:

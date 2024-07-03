@@ -4,10 +4,10 @@ from bs4 import BeautifulSoup
 import asyncio
 import logging
 from aiogram import Bot
-from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key
+from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key, smoke_break
 import datetime
 # import threading
-# from aiogram.enums import ParseMode
+from aiogram.enums import ParseMode
 
 
 # Инициализация бота
@@ -100,10 +100,10 @@ async def monitor(callback, etimer = 0, timer=None):
                         save_additional_data(data)
 
                         message = (
-                            f"Обнаружено: {', '.join(found_keywords)}\n"
+                            f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
                             f"{url}\n"
                             f"{og_title}\n"
-                            f"Запись:\n {og_description}\n"
+                            f"<b>Запись:</b>\n {og_description}\n"
                         )
                         await callback(message)
 
@@ -112,7 +112,7 @@ async def monitor(callback, etimer = 0, timer=None):
                 new_num = int(parts[-1]) + 1
                 if consecutive_matches >= depth_key:
                     new_num = int(parts[-1]) + 1 - depth_key
-                    await asyncio.sleep(60)
+                    await asyncio.sleep(smoke_break)
                 new_url = f"{parts[0]}/{new_num}"
                 group['url'] = new_url
 
