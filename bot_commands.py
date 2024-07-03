@@ -6,7 +6,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import BotCommand
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring,monitoring
+from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring, check_monitoring
 from user_utils import load_users, save_users
 from config import TELEGRAM_BOT_TOKEN, OWNER_ID
 
@@ -219,11 +219,9 @@ async def check_monitoring_command(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
-    global monitoring
-    print(monitoring)
-    check_message = "поиск не запущен"
-    if monitoring: check_message="ведется поиск"
-    await message.answer(check_message)
+
+    # check_message = check_monitoring()
+    await message.answer(check_monitoring())
 
 async def clear_keywords(message: types.Message):
     if not user_is_authorized(message.from_user.id):

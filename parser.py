@@ -6,7 +6,8 @@ import logging
 from aiogram import Bot
 from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key
 import datetime
-from aiogram.enums import ParseMode
+# import threading
+# from aiogram.enums import ParseMode
 
 
 # Инициализация бота
@@ -18,6 +19,8 @@ logging.basicConfig(level=logging.INFO)
 
 # # Инициализация переменной глубины ключа
 # depth_key = 5
+
+# monitoring_active = threading.Event()
 
 def load_keywords():
     with open("keywords.json", "r", encoding="utf-8") as file:
@@ -130,3 +133,10 @@ async def start_monitoring(callback):
 def stop_monitoring():
     global monitoring
     monitoring = False
+
+def check_monitoring():
+    global monitoring
+    if monitoring:
+        return "Ведется активное слежение"
+    else:
+        return "Слежение отключено"
