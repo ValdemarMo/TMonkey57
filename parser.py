@@ -3,24 +3,13 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import logging
-from aiogram import Bot
 from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key, smoke_break
 import datetime
-# import threading
-from aiogram.enums import ParseMode
 
-
-# Инициализация бота
-bot = Bot(token=TELEGRAM_BOT_TOKEN)
 monitoring = False
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
-
-# # Инициализация переменной глубины ключа
-# depth_key = 5
-
-# monitoring_active = threading.Event()
 
 def load_keywords():
     with open("keywords.json", "r", encoding="utf-8") as file:
@@ -103,7 +92,7 @@ async def monitor(callback, etimer = 0, timer=None):
                             f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
                             f"{url}\n"
                             f"{og_title}\n"
-                            f"<b>Запись:</b>\n {og_description}\n"
+                            f"<b>Запись:</b>\n{og_description}\n"
                         )
                         await callback(message)
 

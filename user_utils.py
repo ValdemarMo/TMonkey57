@@ -1,11 +1,10 @@
 import json
 import logging
-
-USERS_FILE = "users.json"
+from config import USERS_FILE_PATH
 
 def load_users():
     try:
-        with open(USERS_FILE, "r") as f:
+        with open(USERS_FILE_PATH, "r") as f:
             users = json.load(f).get("users", [])
             logging.info(f"Loaded users: {users}")
             return users
@@ -15,7 +14,7 @@ def load_users():
 
 def save_users(users):
     try:
-        with open(USERS_FILE, "w") as f:
+        with open(USERS_FILE_PATH, "w") as f:
             json.dump({"users": users}, f)
             logging.info(f"Saved users: {users}")
     except Exception as e:

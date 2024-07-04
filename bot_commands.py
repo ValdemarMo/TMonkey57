@@ -1,4 +1,3 @@
-import json
 import requests
 import string
 import logging
@@ -8,9 +7,10 @@ from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring, check_monitoring
 from user_utils import load_users, save_users
-from config import TELEGRAM_BOT_TOKEN, OWNER_ID
+from config import OWNER_ID
 
 pending_clear_confirmations = {}
+
 
 async def setup_bot_commands(bot: Bot):
     commands = [
