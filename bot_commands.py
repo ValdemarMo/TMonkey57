@@ -5,9 +5,10 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import BotCommand
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
-from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring, check_monitoring
+from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring, check_monitoring, remove_url_numbers
 from user_utils import load_users, save_users
 from config import OWNER_ID
+import re
 
 pending_clear_confirmations = {}
 
@@ -65,20 +66,14 @@ def user_is_authorized(user_id):
 async def notify_all_users(bot: Bot, message: str):
     users = load_users()
     for user_id in users:
-        try:
-            await bot.send_message(user_id, message, disable_web_page_preview = True,
-                                   parse_mode=ParseMode.HTML)
-        except Exception as e:
-            logging.error(f"Failed to send message to {user_id}: {e}")
+        await bot.send_message(user_id, message, disable_web_page_preview=True,
+                               parse_mode=ParseMode.HTML)
+        # try:
+        #     await bot.send_message(user_id, message, disable_web_page_preview = True,
+        #                            parse_mode=ParseMode.HTML)
+        # except Exception as e:
+        #     logging.error(f"Failed to send message to {user_id}: {e}")
 
-# async def send_welcome(message: types.Message):
-#     await message.answer('Добро пожаловать!\n'
-#                          'Для слежения за новой группой:\n'
-#                          'добавьте ключевые слова /add_keyword ***\n'
-#                          'добавьте группу /add_group *****\n'
-#                          '(используйте ссылку на одно из последних сообщений в группе)\n'
-#                          'нажмите Начать слежение /start_monitoring\n'
-#                          'Используйте /help для просмотра всех доступных команд.')
 
 async def send_welcome(message: types.Message):
     welcome_message = (
@@ -135,6 +130,7 @@ async def remove_keyword(message: types.Message):
     if message.text == '/remove_keyword':
         await message.answer(f"<b>вы не ввели ключевые слова</b> \n(списком через запятую), попробуйте ещё раз",
                              parse_mode=ParseMode.HTML)
+        return
     keywords = load_keywords()
     remove_keywords_text = message.text.split(maxsplit=1)[1]
     remove_keywords = [kw.strip().replace('_', ' ').translate(str.maketrans('', '', string.punctuation)) for kw in remove_keywords_text.split(',')]
@@ -147,13 +143,11 @@ async def remove_group(message: types.Message):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
     if message.text == '/remove_group':
-        await message.answer("<b>вы не ввели группу</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+        await message.answer("<b>вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
                              parse_mode=ParseMode.HTML)
         return
     groups = load_groups()
-    # remove_names_text = message.text.split()[1:]
-    # remove_names = message.text
-    remove_names = [groups.strip() for groups in message.text]
+    remove_names = message.text.split()[1:]
     groups = [group for group in groups if group["name"] not in remove_names]
     save_groups(groups)
     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
@@ -179,7 +173,9 @@ async def add_group(message: types.Message):
 
     url = message.text.split()[1]
     # post_number = int(url.rstrip('/').rsplit('/', 1)[-1]) + 1000
-    end_url = f"{url.rstrip('/').rsplit('/', 1)[0]}/"
+    # end_url = f"{url.rstrip('/').rsplit('/', 1)[0]}/"
+    end_url = f"{remove_url_numbers(url)}/"
+
 
     try:
         response = requests.get(end_url)
@@ -208,16 +204,6 @@ async def add_group(message: types.Message):
     except requests.RequestException as e:
         await message.answer(f"Ошибка при добавлении группы: {e}")
 
-# async def remove_group(message: types.Message):
-#     if not user_is_authorized(message.from_user.id):
-#         await message.answer("У вас нет прав на выполнение этой команды.")
-#         return
-#
-#     groups = load_groups()
-#     remove_names = message.text.split()[1:]
-#     groups = [group for group in groups if group["name"] not in remove_names]
-#     save_groups(groups)
-#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
 
 async def list_groups(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -225,9 +211,10 @@ async def list_groups(message: types.Message):
         return
 
     groups = load_groups()
-    group_names = [group["name"] for group in groups]
-    await message.answer(f"<b>Группы:</b>\n" + "\n".join(group_names),
-                         parse_mode=ParseMode.HTML)
+    group_names  = [f'<a href="{remove_url_numbers(group["url"])}">{group["name"]}</a>' for group in groups]
+    await message.answer(f"<b>Группы:</b>\n" + "\n".join(group_names ),
+                         disable_web_page_preview=True, parse_mode=ParseMode.HTML)
+
 
 async def start_monitoring_command(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -277,15 +264,17 @@ async def add_user(message: types.Message):
     if message.text == '/add_user':
         await message.answer("<b>вы не ввели Telegramm user ID</b>, \nпопробуйте ещё раз",
                          parse_mode=ParseMode.HTML)
-
+        return
     new_user_id = int(message.text.split()[1])
     users = load_users()
     if new_user_id not in users:
         users.append(new_user_id)
         save_users(users)
-        await message.answer(f"Пользователь {new_user_id} добавлен.")
+        await message.answer(f"Пользователь <b>{new_user_id}</b> добавлен.",
+                         parse_mode=ParseMode.HTML)
     else:
-        await message.answer(f"Пользователь {new_user_id} уже существует.")
+        await message.answer(f"Пользователь <b>{new_user_id}</b> уже существует.",
+                         parse_mode=ParseMode.HTML)
 
 async def remove_user(message: types.Message):
     if message.from_user.id != OWNER_ID:
@@ -295,7 +284,7 @@ async def remove_user(message: types.Message):
     if message.text == '/remove_user':
         await message.answer("<b>вы не ввели Telegramm user ID</b>, \nпопробуйте ещё раз",
                          parse_mode=ParseMode.HTML)
-
+        return
     user_id_to_remove = int(message.text.split()[1])
     users = load_users()
     if user_id_to_remove in users:

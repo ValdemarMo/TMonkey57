@@ -3,8 +3,9 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import logging
-from config import TELEGRAM_BOT_TOKEN, OWNER_ID, time_stop, depth_key, smoke_break
+from config import logging_parser, time_stop, depth_key, smoke_break
 import datetime
+import re
 
 monitoring = False
 
@@ -38,6 +39,11 @@ def get_og_data(content):
     og_description = soup.find("meta", property="og:description")["content"]
     return og_title, og_description
 
+def remove_url_numbers(url: str) -> str:
+    # Удаления цифр в конце URL
+    # return re.sub(r'/\d+$', '', url)
+    return f"{url.rstrip('/').rsplit('/', 1)[0]}/"
+
 async def monitor(callback, etimer = 0, timer=None):
     global monitoring
     while monitoring:
@@ -50,25 +56,25 @@ async def monitor(callback, etimer = 0, timer=None):
             end_key = group['end_key']
             consecutive_matches = group.get('consecutive_matches', 0)  # Инициализируем счетчик совпадений
             now = datetime.datetime.now()
-            logging.info(f"Запрос #{etimer} URL: {now.isoformat()} {url}")
+            if logging_parser: logging.info(f"Запрос #{etimer} URL: {now.isoformat()} {url}")
             try:
                 response = requests.get(url)
                 response.raise_for_status()
                 content = response.text
 
                 og_title, og_description = get_og_data(content)
-                logging.info(f"og:description для {url}: {og_description}")
+                if logging_parser: logging.info(f"og:description для {url}: {og_description}")
 
                 if og_description.lower() == end_key.lower():
                     consecutive_matches += 1
-                    logging.info(f"Совпадение {consecutive_matches}/{depth_key} для URL: {url}")
+                    if logging_parser: logging.info(f"Совпадение {consecutive_matches}/{depth_key} для URL: {url}")
                     if consecutive_matches >= depth_key:
                         parts = url.rstrip('/').rsplit('/', 1)
                         new_num = int(parts[-1]) + 1 - depth_key
                         new_url = f"{parts[0]}/{new_num}"
                         group['url'] = new_url
                         group['consecutive_matches'] = 0  # Сбрасываем счетчик после изменения URL
-                        logging.info(f"URL изменен на: {new_url} из-за {depth_key} совпадений подряд")
+                        if logging_parser: logging.info(f"URL изменен на: {new_url} из-за {depth_key} совпадений подряд")
                     else:
                         group['consecutive_matches'] = consecutive_matches
                 else:
@@ -90,8 +96,8 @@ async def monitor(callback, etimer = 0, timer=None):
 
                         message = (
                             f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
-                            f"{url}\n"
-                            f"{og_title}\n"
+                            # f"{url}\n"
+                            f"<a href=\"{url}\">{og_title}</a>\n"
                             f"<b>Запись:</b>\n{og_description}\n"
                         )
                         await callback(message)
