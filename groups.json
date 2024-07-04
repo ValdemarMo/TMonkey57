@@ -10,11 +10,5 @@
         "name": "ИА «Панорама»",
         "end_key": "Panorama News Agency & Publishing House ® http://panorama.pub/\t\tПолные тексты в Telegram: https://t.me/+09h45HJ1k8o4NWEy\t\tВК: https://vk.com/ia_panorama                                      \t\tПо вопросам рекламы: @panorama_ads",
         "consecutive_matches": 0
-    },
-    {
-        "url": "https://t.me/inosmichannel/19118",
-        "name": "ИноСМИ",
-        "end_key": "Самое интересное в зарубежных СМИ: переводим, обсуждаем и комментируем. Ежедневно. \t\tTelegram-канал интернет-портала inosmi.ru\tОбратная связь, разбан – @InoSMI_bot \tОбсуждение - @inosmi_chat\t\t©️ Медиагруппа «Россия сегодня»",
-        "consecutive_matches": 33
     }
 ]
