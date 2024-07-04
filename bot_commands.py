@@ -138,19 +138,47 @@ async def remove_keyword(message: types.Message):
     save_keywords(keywords)
     await notify_all_users(message.bot, f"<b>Удалены ключевые слова:</b>\n" + "\n".join(remove_keywords))
 
+# async def remove_group(message: types.Message):
+#     if not user_is_authorized(message.from_user.id):
+#         await message.answer("У вас нет прав на выполнение этой команды.")
+#         return
+#     if message.text == '/remove_group':
+#         await message.answer("<b>вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+#                              parse_mode=ParseMode.HTML)
+#         return
+#     groups = load_groups()
+#     remove_names = message.text.split()[1:]
+#     groups = [group for group in groups if group["name"] not in remove_names]
+#     save_groups(groups)
+#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
+
 async def remove_group(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
-    if message.text == '/remove_group':
-        await message.answer("<b>вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-                             parse_mode=ParseMode.HTML)
+
+    # Используем регулярное выражение для разделения команды и названия группы
+    match = re.match(r'^/remove_group\s+(.+)$', message.text)
+    if not match:
+        await message.answer(
+            "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+            parse_mode=types.ParseMode.HTML
+        )
         return
+
+    group_name = match.group(1).strip()
     groups = load_groups()
-    remove_names = message.text.split()[1:]
+
+    # Находим группы для удаления
+    remove_names = [group_name]
     groups = [group for group in groups if group["name"] not in remove_names]
+
     save_groups(groups)
+
     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
+
+
+
 
 async def list_keywords(message: types.Message):
     if not user_is_authorized(message.from_user.id):
