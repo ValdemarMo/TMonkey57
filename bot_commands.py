@@ -152,32 +152,63 @@ async def remove_keyword(message: types.Message):
 #     save_groups(groups)
 #     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
 
+# async def remove_group(message: types.Message):
+#     if not user_is_authorized(message.from_user.id):
+#         await message.answer("У вас нет прав на выполнение этой команды.")
+#         return
+#     if message.text == '/remove_group':
+#         await message.answer(
+#             "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+#             parse_mode=types.ParseMode.HTML
+#         )
+#         return
+#
+#     # Используем регулярное выражение для разделения команды и названия группы
+#     match = re.match(r'^/remove_group\s+(.+)$', message.text)
+#     if not match:
+#         await message.answer(
+#             "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+#             parse_mode=types.ParseMode.HTML
+#         )
+#         return
+#
+#     group_name = match.group(1).strip()
+#     groups = load_groups()
+#
+#     # Находим группы для удаления
+#     remove_names = [group_name]
+#     groups = [group for group in groups if group["name"] not in remove_names]
+#
+#     save_groups(groups)
+#
+#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
+
 async def remove_group(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
 
-    # Используем регулярное выражение для разделения команды и названия группы
-    match = re.match(r'^/remove_group\s+(.+)$', message.text)
-    if not match:
+    # Если текст команды только /remove_group, сообщить пользователю
+    if message.text.strip() == '/remove_group':
         await message.answer(
             "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-            parse_mode=types.ParseMode.HTML
-        )
+            parse_mode=ParseMode.HTML)
         return
 
-    group_name = match.group(1).strip()
+    # Получить текст после команды /remove_group
+    remove_group_name = message.text[len('/remove_group'):].strip()
+
+    # Загружаем существующие группы
     groups = load_groups()
 
-    # Находим группы для удаления
-    remove_names = [group_name]
-    groups = [group for group in groups if group["name"] not in remove_names]
+    # Фильтруем группы, чтобы удалить указанную
+    updated_groups = [group for group in groups if group["name"] != remove_group_name]
 
-    save_groups(groups)
+    # Сохраняем обновленный список групп
+    save_groups(updated_groups)
 
-    await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
-
-
+    # Отправляем уведомление всем пользователям
+    await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n{remove_group_name}", parse_mode=ParseMode.HTML)
 
 
 async def list_keywords(message: types.Message):
