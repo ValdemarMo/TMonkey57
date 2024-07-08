@@ -228,11 +228,8 @@ async def remove_group(message: types.Message):
     save_groups(updated_groups)
 
     # Отправляем уведомление всем пользователям
-    await notify_all_users(
-        message.bot,
-        f"<b>Удалены группы:</b>\n{remove_group_name}",
-        parse_mode=ParseMode.HTML,
-    )
+    await notify_all_users(message.bot,
+        f"<b>Удалены группы:</b>\n{remove_group_name}")
 
 
 async def list_keywords(message: types.Message):
@@ -242,8 +239,7 @@ async def list_keywords(message: types.Message):
 
     keywords = load_keywords()
     await message.answer(
-        f"<b>Ключевые слова:</b>\n" + "\n".join(keywords), parse_mode=ParseMode.HTML
-    )
+        f"<b>Ключевые слова:</b>\n" + "\n".join(keywords), parse_mode=ParseMode.HTML)
 
 
 async def add_group(message: types.Message):
