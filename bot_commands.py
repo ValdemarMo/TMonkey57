@@ -2,12 +2,12 @@ import requests
 import string
 import logging
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import BotCommand
+from aiogram.types import BotCommand, Chat
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from parser import get_og_data, load_keywords, save_keywords, load_groups, save_groups, start_monitoring, stop_monitoring, check_monitoring, remove_url_numbers
 from user_utils import load_users, save_users
-from config import OWNER_ID
+from config import OWNER_ID, TELEGRAM_BOT_TOKEN
 import re
 
 pending_clear_confirmations = {}
@@ -31,7 +31,8 @@ async def setup_bot_commands(bot: Bot):
         BotCommand(command="/add_user", description="Добавить пользователя \n(только для администратора)"),
         BotCommand(command="/remove_user", description="Удалить пользователя \n(только для администратора)"),
         BotCommand(command="/clear_users", description="Очистить список пользователей \n(только для администратора)"),
-        BotCommand(command="/list_users", description="Показать список пользователей \n(только для администратора)")
+        BotCommand(command="/list_users", description="Показать список пользователей \n(только для администратора)"),
+        BotCommand(command="/send_user_id", description="Показать мой user id (telegramm)")
     ]
     await bot.set_my_commands(commands)
     logging.info("Bot commands have been set")
@@ -54,6 +55,7 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     dp.message.register(remove_user, Command(commands=["remove_user"]))
     dp.message.register(clear_users, Command(commands=["clear_users"]))
     dp.message.register(list_users, Command(commands=["list_users"]))
+    dp.message.register(send_user_id, Command(commands=["send_user_id"]))
     dp.message.register(handle_all_messages)
     logging.info("Handlers have been registered")
 
@@ -62,6 +64,21 @@ def user_is_authorized(user_id):
     is_authorized = user_id in users or user_id == OWNER_ID
     logging.info(f"User {user_id} authorization check: {is_authorized}")
     return is_authorized
+
+async def send_user_id(message: types.Message):
+    user_id = message.from_user.id
+    await message.answer(f"Ваш user id: <b>{user_id}</b>", parse_mode=ParseMode.HTML)
+
+async def get_user_name(user_id: int):
+    async with Bot(token=TELEGRAM_BOT_TOKEN) as bot:
+        try:
+            user: Chat = await bot.get_chat(user_id)
+            user_name = user.username if user.username else f"{user.first_name} {user.last_name}"
+            user_url = f"https://t.me/{user.username}" if user.username else f"https://t.me/user?id={user_id}"
+            return user_name, user_url
+        except Exception as e:
+            print(f"Failed to get user information for user_id {user_id}: {e}")
+            return None, None
 
 async def notify_all_users(bot: Bot, message: str):
     users = load_users()
@@ -101,10 +118,11 @@ async def send_help(message: types.Message):
         "/check_monitoring - Проверка слежения\n"
         "/clear_keywords - Очистить список ключевых слов\n"
         "/clear_groups - Очистить список групп\n"
-        "/add_user - Добавить пользователя\n(только для администратора)\n"
-        "/remove_user - Удалить пользователя\n(только для администратора)\n"
-        "/clear_users - Очистить список пользователей\n(только для администратора)\n"
-        "/list_users - Показать список пользователей\n(только для администратора)\n"
+        # "/add_user - Добавить пользователя\n(только для администратора)\n"
+        # "/remove_user - Удалить пользователя\n(только для администратора)\n"
+        # "/clear_users - Очистить список пользователей\n(только для администратора)\n"
+        # "/list_users - Показать список пользователей\n(только для администратора)\n"
+        "/send_user_id - Показать мой user id (telegramm)\n"
     )
     await message.answer(help_text)
 
@@ -138,50 +156,6 @@ async def remove_keyword(message: types.Message):
     save_keywords(keywords)
     await notify_all_users(message.bot, f"<b>Удалены ключевые слова:</b>\n" + "\n".join(remove_keywords))
 
-# async def remove_group(message: types.Message):
-#     if not user_is_authorized(message.from_user.id):
-#         await message.answer("У вас нет прав на выполнение этой команды.")
-#         return
-#     if message.text == '/remove_group':
-#         await message.answer("<b>вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-#                              parse_mode=ParseMode.HTML)
-#         return
-#     groups = load_groups()
-#     remove_names = message.text.split()[1:]
-#     groups = [group for group in groups if group["name"] not in remove_names]
-#     save_groups(groups)
-#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
-
-# async def remove_group(message: types.Message):
-#     if not user_is_authorized(message.from_user.id):
-#         await message.answer("У вас нет прав на выполнение этой команды.")
-#         return
-#     if message.text == '/remove_group':
-#         await message.answer(
-#             "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-#             parse_mode=types.ParseMode.HTML
-#         )
-#         return
-#
-#     # Используем регулярное выражение для разделения команды и названия группы
-#     match = re.match(r'^/remove_group\s+(.+)$', message.text)
-#     if not match:
-#         await message.answer(
-#             "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-#             parse_mode=types.ParseMode.HTML
-#         )
-#         return
-#
-#     group_name = match.group(1).strip()
-#     groups = load_groups()
-#
-#     # Находим группы для удаления
-#     remove_names = [group_name]
-#     groups = [group for group in groups if group["name"] not in remove_names]
-#
-#     save_groups(groups)
-#
-#     await notify_all_users(message.bot, f"<b>Удалены группы:</b>\n" + "\n".join(remove_names))
 
 async def remove_group(message: types.Message):
     if not user_is_authorized(message.from_user.id):
@@ -364,14 +338,39 @@ async def clear_users(message: types.Message):
     await message.answer("Вы уверены, что <b>хотите удалить всех пользователей?</b> Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
                          parse_mode=ParseMode.HTML)
 
+# async def list_users(message: types.Message):
+#     if message.from_user.id != OWNER_ID:
+#         await message.answer("У вас нет прав на выполнение этой команды.")
+#         return
+#
+#     users = load_users()
+#     await message.answer(f"<b>Пользователи:</b>\n" + "\n".join(map(str, users)),
+#                          parse_mode=ParseMode.HTML)
+
 async def list_users(message: types.Message):
     if message.from_user.id != OWNER_ID:
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
 
     users = load_users()
-    await message.answer(f"<b>Пользователи:</b>\n" + "\n".join(map(str, users)),
-                         parse_mode=ParseMode.HTML)
+    user_list = []
+    invalid_users = []
+
+    for user_id in users:
+        user_name, user_url = await get_user_name(user_id)
+        if user_name and user_url:
+            user_list.append(f'{user_id} - <a href="{user_url}">{user_name}</a>')
+        else:
+            user_list.append(f'User ID: {user_id} (name not found)')
+            invalid_users.append(user_id)
+
+    # Удалить недействительных пользователей из списка
+    if invalid_users:
+        users = [user_id for user_id in users if user_id not in invalid_users]
+        save_users(users)
+
+    await message.answer(f"<b>Пользователи:</b>\n" + "\n".join(user_list), disable_web_page_preview=True,
+                               parse_mode=ParseMode.HTML)
 
 async def handle_all_messages(message: types.Message):
     if message.from_user.id not in pending_clear_confirmations:
@@ -396,3 +395,4 @@ async def handle_all_messages(message: types.Message):
             await message.answer("Нет ожидающих подтверждений для выполнения.")
     else:
         await message.answer("Неверная команда. Используйте /help для просмотра доступных команд.")
+
