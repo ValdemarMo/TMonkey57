@@ -2,6 +2,7 @@ import json
 import logging
 from config import USERS_FILE_PATH
 
+
 def load_users():
     try:
         with open(USERS_FILE_PATH, "r") as f:
@@ -11,6 +12,7 @@ def load_users():
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.error(f"Error loading users: {e}")
         return []
+
 
 def save_users(users):
     try:

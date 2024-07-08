@@ -3,6 +3,7 @@ from aiogram import Bot, Dispatcher
 from bot_commands import register_handlers, setup_bot_commands
 from config import TELEGRAM_BOT_TOKEN
 
+
 async def main():
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     dp = Dispatcher()
@@ -18,7 +19,9 @@ async def main():
 if __name__ == "__main__":
     import logging
 
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
     asyncio.run(main())
 
 # import asyncio
