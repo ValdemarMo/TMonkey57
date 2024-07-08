@@ -295,8 +295,7 @@ async def list_groups(message: types.Message):
     ]
     await message.answer(
         f"<b>Группы:</b>\n" + "\n".join(group_names),
-        disable_web_page_preview=True,
-        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True, parse_mode=ParseMode.HTML,
     )
 
 

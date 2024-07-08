@@ -5,7 +5,7 @@ import asyncio
 import logging
 from config import logging_parser, time_stop, depth_key, smoke_break
 import datetime
-import re
+# import re
 
 monitoring = False
 
@@ -108,7 +108,7 @@ async def monitor(callback, etimer=0, timer=None):
                     ]
 
                     if found_keywords:
-                        timestamp = response.headers.get("Date", "Unknown time")
+                        # timestamp = response.headers.get("Date", "Unknown time")
                         # data = {
                         #     "url": url,
                         #     "timestamp": timestamp,
