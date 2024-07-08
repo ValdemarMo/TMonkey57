@@ -9,7 +9,7 @@ OWNER_ID = int(os.getenv("OWNER_ID"))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 USERS_FILE_PATH = "users.json"
 
-logging_parser = True
+logging_parser = True # подробные логи парсинга
 
 # временной цикл мониторинга групп:
 # максимальная длительность = time_stop * depth_key + smoke_break
