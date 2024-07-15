@@ -3,8 +3,16 @@ import requests
 from bs4 import BeautifulSoup
 import asyncio
 import logging
-from config import logging_parser, time_stop, depth_key, smoke_break
+from config import (logging_parser,
+                    time_stop,
+                    depth_key,
+                    smoke_break,
+                    KEYWORDS_FILE_PATH,
+                    GROUPS_FILE_PATH,
+                    ADD_FILE_PATH)
 import datetime
+
+
 # import re
 
 monitoring = False
@@ -14,27 +22,27 @@ logging.basicConfig(level=logging.INFO)
 
 
 def load_keywords():
-    with open("keywords.json", "r", encoding="utf-8") as file:
+    with open(KEYWORDS_FILE_PATH, "r", encoding="utf-8") as file:
         return json.load(file)
 
 
 def save_keywords(keywords):
-    with open("keywords.json", "w", encoding="utf-8") as file:
+    with open(KEYWORDS_FILE_PATH, "w", encoding="utf-8") as file:
         json.dump([kw.lower() for kw in keywords], file, ensure_ascii=False, indent=4)
 
 
 def load_groups():
-    with open("groups.json", "r", encoding="utf-8") as file:
+    with open(GROUPS_FILE_PATH, "r", encoding="utf-8") as file:
         return json.load(file)
 
 
 def save_groups(groups):
-    with open("groups.json", "w", encoding="utf-8") as file:
+    with open(GROUPS_FILE_PATH, "w", encoding="utf-8") as file:
         json.dump(groups, file, ensure_ascii=False, indent=4)
 
 
 def save_additional_data(data):
-    with open("add.json", "a", encoding="utf-8") as file:
+    with open(ADD_FILE_PATH, "a", encoding="utf-8") as file:
         json.dump(data, file, ensure_ascii=False, indent=4)
         file.write("\n")
 

@@ -7,7 +7,11 @@ API_ID = os.getenv("API_ID")
 API_HASH = os.getenv("API_HASH")
 OWNER_ID = int(os.getenv("OWNER_ID"))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-USERS_FILE_PATH = "users.json"
+
+USERS_FILE_PATH = "data/users.json"
+GROUPS_FILE_PATH = "data/groups.json"
+KEYWORDS_FILE_PATH = "data/keywords.json"
+ADD_FILE_PATH = "data/add.json"
 
 logging_parser = True # подробные логи парсинга
 
