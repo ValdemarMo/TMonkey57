@@ -1,31 +1,21 @@
-# Используем базовый образ Python
-FROM python:3.9
+# Используем базовый образ Alpine Linux
+FROM alpine:latest
 
-# Устанавливаем переменные окружения
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# Установим необходимые пакеты
+RUN apk add --no-cache python3 py3-pip py3-virtualenv
 
-# Устанавливаем рабочую директорию
+# Создадим рабочую директорию внутри контейнера
 WORKDIR /app
 
-# Обновляем и устанавливаем необходимые зависимости
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libssl-dev \
-    libffi-dev \
-    python3-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# Скопируем файлы приложения в рабочую директорию
+COPY . /app
 
-# Копируем файлы с зависимостями
-COPY requirements.txt /app/
+# Создадим и активируем виртуальную среду
+RUN python3 -m venv /app/venv
 
-# Устанавливаем зависимости Python
-RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+# Установим зависимости в виртуальную среду
+RUN /app/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
 
-# Копируем проект в рабочую директорию
-COPY . /app/
+# Укажем команду для запуска приложения
+CMD ["/app/venv/bin/python", "main.py"]
 
-# Запускаем приложение
-CMD ["python", "main.py"]
