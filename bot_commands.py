@@ -18,7 +18,6 @@ from parser import (
 )
 from user_utils import load_users, save_users
 from config import OWNER_ID, TELEGRAM_BOT_TOKEN
-import re
 
 pending_clear_confirmations = {}
 

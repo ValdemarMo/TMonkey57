@@ -1,21 +1,30 @@
-# Используем базовый образ Alpine Linux
-FROM alpine:latest
+# Многоэтапная сборка
+FROM python:3.9-slim AS builder
 
 # Установим необходимые пакеты
-RUN apk add --no-cache python3 py3-pip py3-virtualenv
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Создадим рабочую директорию внутри контейнера
+# Создадим рабочую директорию
 WORKDIR /app
 
-# Скопируем файлы приложения в рабочую директорию
+# Скопируем только необходимые файлы
+COPY requirements.txt /app/
+RUN python3 -m venv /app/venv \
+    && . /app/venv/bin/activate \
+    && pip install --upgrade pip \
+    && pip install --no-cache-dir -r requirements.txt
+
 COPY . /app
 
-# Создадим и активируем виртуальную среду
-RUN python3 -m venv /app/venv
+# Финальный этап
+FROM python:3.9-slim
 
-# Установим зависимости в виртуальную среду
-RUN /app/venv/bin/pip install --no-cache-dir -r /app/requirements.txt
+# Скопируем виртуальную среду из первого этапа
+COPY --from=builder /app /app
 
-# Укажем команду для запуска приложения
+# Укажем рабочую директорию и команду для запуска приложения
+WORKDIR /app
 CMD ["/app/venv/bin/python", "main.py"]
 

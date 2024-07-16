@@ -13,9 +13,8 @@ from config import (logging_parser,
 import datetime
 
 
-# import re
-
 monitoring = False
+
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
