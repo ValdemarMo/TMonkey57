@@ -8,6 +8,7 @@ from config import (logging_parser,
                     depth_key,
                     smoke_break,
                     KEYWORDS_FILE_PATH,
+                    EXCEPTIONS_FILE_PATH,
                     GROUPS_FILE_PATH,
                     ADD_FILE_PATH)
 import datetime
@@ -27,6 +28,15 @@ def load_keywords():
 
 def save_keywords(keywords):
     with open(KEYWORDS_FILE_PATH, "w", encoding="utf-8") as file:
+        json.dump([kw.lower() for kw in keywords], file, ensure_ascii=False, indent=4)
+
+def load_exceptions():
+    with open(EXCEPTIONS_FILE_PATH, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+
+def save_exceptions(keywords):
+    with open(EXCEPTIONS_FILE_PATH, "w", encoding="utf-8") as file:
         json.dump([kw.lower() for kw in keywords], file, ensure_ascii=False, indent=4)
 
 
@@ -64,6 +74,7 @@ async def monitor(callback, etimer=0, timer=None):
     while monitoring:
         groups = load_groups()
         keywords = load_keywords()
+        exceptions = load_exceptions()
 
         for group in groups:
             etimer += 1
@@ -113,25 +124,30 @@ async def monitor(callback, etimer=0, timer=None):
                     found_keywords = [
                         kw for kw in keywords if kw.lower() in og_description.lower()
                     ]
+                    found_exceptions = [
+                        ex for ex in exceptions if ex.lower() in og_description.lower()
+                    ]
 
                     if found_keywords:
-                        # timestamp = response.headers.get("Date", "Unknown time")
-                        # data = {
-                        #     "url": url,
-                        #     "timestamp": timestamp,
-                        #     "og_title": og_title,
-                        #     "og_description": og_description,
-                        #     "found_keywords": found_keywords
-                        # }
-                        # save_additional_data(data)
+                        timestamp = response.headers.get("Date", "Unknown time")
+                        data = {
+                            "found_keywords": found_keywords,
+                            "found_exceptions": found_exceptions,
+                            "url": url,
+                            "og_title": og_title,
+                            "timestamp": timestamp,
+                            "og_description": og_description
+                        }
+                        save_additional_data(data)
 
-                        message = (
-                            f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
-                            # f"{url}\n"
-                            f'<a href="{url}">{og_title}</a>\n'
-                            f"<b>Запись:</b>\n{og_description}\n"
-                        )
-                        await callback(message)
+                        if not found_exceptions:
+                            message = (
+                                f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
+                                # f"{url}\n"
+                                f'<a href="{url}">{og_title}</a>\n'
+                                f"<b>Запись:</b>\n{og_description}\n"
+                            )
+                            await callback(message)
 
                 # Обновляем URL на следующий
                 parts = url.rstrip("/").rsplit("/", 1)

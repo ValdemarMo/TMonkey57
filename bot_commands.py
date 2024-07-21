@@ -9,6 +9,8 @@ from parser import (
     get_og_data,
     load_keywords,
     save_keywords,
+    load_exceptions,
+    save_exceptions,
     load_groups,
     save_groups,
     start_monitoring,
@@ -29,6 +31,9 @@ async def setup_bot_commands(bot: Bot):
         BotCommand(command="/add_keyword", description="Добавить ключевое слово"),
         BotCommand(command="/remove_keyword", description="Удалить ключевое слово"),
         BotCommand(command="/list_keywords", description="Показать список ключевых слов"),
+        BotCommand(command="/add_exception", description="Добавить слово-исключение"),
+        BotCommand(command="/remove_exception", description="Удалить слово-исключение"),
+        BotCommand(command="/list_exceptions", description="Показать список слов-исключений"),
         BotCommand(command="/add_group", description="Добавить группу"),
         BotCommand(command="/remove_group", description="Удалить группу"),
         BotCommand(command="/list_groups", description="Показать список групп"),
@@ -36,6 +41,7 @@ async def setup_bot_commands(bot: Bot):
         BotCommand(command="/stop_monitoring", description="Завершить слежение"),
         BotCommand(command="/check_monitoring", description="Проверить состояние слежения"),
         BotCommand(command="/clear_keywords", description="Очистить список ключевых слов"),
+        BotCommand(command="/clear_exceptions", description="Очистить слов-исключений"),
         BotCommand(command="/clear_groups", description="Очистить список групп"),
         BotCommand(command="/add_user", description="Добавить пользователя \n(только для администратора)"),
         BotCommand(command="/remove_user", description="Удалить пользователя \n(только для администратора)"),
@@ -53,6 +59,9 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     dp.message.register(add_keyword, Command(commands=["add_keyword"]))
     dp.message.register(remove_keyword, Command(commands=["remove_keyword"]))
     dp.message.register(list_keywords, Command(commands=["list_keywords"]))
+    dp.message.register(add_exception, Command(commands=["add_exception"]))
+    dp.message.register(remove_exception, Command(commands=["remove_exception"]))
+    dp.message.register(list_exceptions, Command(commands=["list_exceptions"]))
     dp.message.register(add_group, Command(commands=["add_group"]))
     dp.message.register(remove_group, Command(commands=["remove_group"]))
     dp.message.register(list_groups, Command(commands=["list_groups"]))
@@ -60,6 +69,7 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     dp.message.register(stop_monitoring_command, Command(commands=["stop_monitoring"]))
     dp.message.register(check_monitoring_command, Command(commands=["check_monitoring"]))
     dp.message.register(clear_keywords, Command(commands=["clear_keywords"]))
+    dp.message.register(clear_exceptions, Command(commands=["clear_exceptions"]))
     dp.message.register(clear_groups, Command(commands=["clear_groups"]))
     dp.message.register(add_user, Command(commands=["add_user"]))
     dp.message.register(remove_user, Command(commands=["remove_user"]))
@@ -119,10 +129,12 @@ async def send_welcome(message: types.Message):
     welcome_message = (
         "<b>Добро пожаловать!</b>\n"
         "Для слежения за новой группой:\n"
-        "<b>добавьте ключевые слова</b> /add_keyword ***\n"
-        "(вставьте слова и фразы через запятую)\n"
         "<b>добавьте группу</b> /add_group *****\n"
         "(вставьте ссылку на запись в группе с которой начнется поиск)\n"
+        "<b>добавьте ключевые слова</b> /add_keyword ***\n"
+        "(вставьте слова и фразы через запятую)\n"
+        "<b>добавьте слова-исключения</b> /add_exception ***\n"
+        "(вставьте слова и фразы через запятую)\n"
         "нажмите <b>Начать слежение</b> /start_monitoring\n"
         "Используйте /help для просмотра всех доступных команд."
     )
@@ -134,6 +146,9 @@ async def send_help(message: types.Message):
         "/add_keyword - Добавить ключевое слово\n"
         "/remove_keyword - Удалить ключевое слово\n"
         "/list_keywords - Показать список ключевых слов\n"
+        "/add_exception - Добавить слово-исключение\n"
+        "/remove_exception - Удалить слово-исключение\n"
+        "/list_exceptions - Показать список слов-исключений\n"
         "/add_group - Добавить группу\n"
         "/remove_group - Удалить группу\n"
         "/list_groups - Показать список групп\n"
@@ -141,6 +156,7 @@ async def send_help(message: types.Message):
         "/stop_monitoring - Завершить слежение\n"
         "/check_monitoring - Проверка слежения\n"
         "/clear_keywords - Очистить список ключевых слов\n"
+        "/clear_exceptions - Очистить список слов-исключений\n"
         "/clear_groups - Очистить список групп\n"
         # "/add_user - Добавить пользователя\n(только для администратора)\n"
         # "/remove_user - Удалить пользователя\n(только для администратора)\n"
@@ -201,36 +217,6 @@ async def remove_keyword(message: types.Message):
     )
 
 
-async def remove_group(message: types.Message):
-    if not user_is_authorized(message.from_user.id):
-        await message.answer("У вас нет прав на выполнение этой команды.")
-        return
-
-    # Если текст команды только /remove_group, сообщить пользователю
-    if message.text.strip() == "/remove_group":
-        await message.answer(
-            "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
-            parse_mode=ParseMode.HTML,
-        )
-        return
-
-    # Получить текст после команды /remove_group
-    remove_group_name = message.text[len("/remove_group") :].strip()
-
-    # Загружаем существующие группы
-    groups = load_groups()
-
-    # Фильтруем группы, чтобы удалить указанную
-    updated_groups = [group for group in groups if group["name"] != remove_group_name]
-
-    # Сохраняем обновленный список групп
-    save_groups(updated_groups)
-
-    # Отправляем уведомление всем пользователям
-    await notify_all_users(message.bot,
-        f"<b>Удалены группы:</b>\n{remove_group_name}")
-
-
 async def list_keywords(message: types.Message):
     if not user_is_authorized(message.from_user.id):
         await message.answer("У вас нет прав на выполнение этой команды.")
@@ -239,6 +225,65 @@ async def list_keywords(message: types.Message):
     keywords = load_keywords()
     await message.answer(
         f"<b>Ключевые слова:</b>\n" + "\n".join(keywords), parse_mode=ParseMode.HTML)
+
+
+async def add_exception(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+    if message.text == "/add_exception":
+        await message.answer(
+            f"<b>вы не ввели слова-исключения</b> \n(списком через запятую), попробуйте ещё раз",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+    exceptions = load_exceptions()
+    new_exceptions_text = message.text.split(maxsplit=1)[1]
+    new_exceptions = []
+    for ex in new_exceptions_text.split(","):
+        new_exceptions.append(ex.strip()
+                              .replace("_", " ")
+                              .translate(str.maketrans("", "", string.punctuation)))
+    exceptions.extend(new_exceptions)
+    save_exceptions(exceptions)
+    await notify_all_users(
+        message.bot, f"<b>Добавлены слова-исключения:</b>\n" + "\n".join(new_exceptions)
+    )
+
+
+async def remove_exception(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+    if message.text == "/remove_exception":
+        await message.answer(
+            f"<b>вы не ввели слова-исключения</b> \n(списком через запятую), попробуйте ещё раз",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+    exceptions = load_exceptions()
+    remove_exceptions_text = message.text.split(maxsplit=1)[1]
+    remove_exceptions = [
+        ex.strip()
+        .replace("_", " ")
+        .translate(str.maketrans("", "", string.punctuation))
+        for ex in remove_exceptions_text.split(",")
+    ]
+    exceptions = [ex for ex in exceptions if ex not in remove_exceptions]
+    save_exceptions(exceptions)
+    await notify_all_users(
+        message.bot, f"<b>Удалены слова-исключения:</b>\n" + "\n".join(remove_exceptions)
+    )
+
+
+async def list_exceptions(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+
+    exceptions = load_exceptions()
+    await message.answer(
+        f"<b>Слова-исключения:</b>\n" + "\n".join(exceptions), parse_mode=ParseMode.HTML)
 
 
 async def add_group(message: types.Message):
@@ -280,6 +325,36 @@ async def add_group(message: types.Message):
         await notify_all_users(message.bot, f"<b>Добавлена группа:</b> \n{og_title}")
     except requests.RequestException as e:
         await message.answer(f"Ошибка при добавлении группы: {e}")
+
+
+async def remove_group(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+
+    # Если текст команды только /remove_group, сообщить пользователю
+    if message.text.strip() == "/remove_group":
+        await message.answer(
+            "<b>Вы не ввели название группы</b>, \n(можно скопировать из /list_groups) \nпопробуйте ещё раз",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
+    # Получить текст после команды /remove_group
+    remove_group_name = message.text[len("/remove_group") :].strip()
+
+    # Загружаем существующие группы
+    groups = load_groups()
+
+    # Фильтруем группы, чтобы удалить указанную
+    updated_groups = [group for group in groups if group["name"] != remove_group_name]
+
+    # Сохраняем обновленный список групп
+    save_groups(updated_groups)
+
+    # Отправляем уведомление всем пользователям
+    await notify_all_users(message.bot,
+        f"<b>Удалены группы:</b>\n{remove_group_name}")
 
 
 async def list_groups(message: types.Message):
@@ -331,7 +406,19 @@ async def clear_keywords(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_keywords"
     await message.answer(
-        "Вы уверены, что <b>хотите очистить список ключевых слов?</b> Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что <b>хотите очистить список ключевых слов?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
+        parse_mode=ParseMode.HTML,
+    )
+
+
+async def clear_exceptions(message: types.Message):
+    if not user_is_authorized(message.from_user.id):
+        await message.answer("У вас нет прав на выполнение этой команды.")
+        return
+
+    pending_clear_confirmations[message.from_user.id] = "clear_exceptions"
+    await message.answer(
+        "Вы уверены, что <b>хотите очистить список слов-исключений?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -343,7 +430,7 @@ async def clear_groups(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_groups"
     await message.answer(
-        "Вы уверены, что хотите очистить список групп? Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что хотите очистить список групп? Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -408,7 +495,7 @@ async def clear_users(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_users"
     await message.answer(
-        "Вы уверены, что <b>хотите удалить всех пользователей?</b> Ответьте <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что <b>хотите удалить всех пользователей?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -462,13 +549,15 @@ async def handle_all_messages(message: types.Message):
         if confirmation == "clear_users":
             users = [OWNER_ID]
             save_users(users)
-            await message.answer(
-                "Список пользователей очищен. Остался только администратор."
-            )
+            await message.answer("Список пользователей очищен. Остался только администратор.")
         elif confirmation == "clear_keywords":
             keywords = []
             save_keywords(keywords)
             await notify_all_users(message.bot, "Список ключевых слов очищен.")
+        elif confirmation == "clear_exceptions":
+            exceptions = []
+            save_exceptions(exceptions)
+            await notify_all_users(message.bot, "Список слов-исключений очищен.")
         elif confirmation == "clear_groups":
             groups = []
             save_groups(groups)
