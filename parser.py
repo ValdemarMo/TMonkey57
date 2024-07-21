@@ -129,16 +129,16 @@ async def monitor(callback, etimer=0, timer=None):
                     ]
 
                     if found_keywords:
-                        timestamp = response.headers.get("Date", "Unknown time")
-                        data = {
-                            "found_keywords": found_keywords,
-                            "found_exceptions": found_exceptions,
-                            "url": url,
-                            "og_title": og_title,
-                            "timestamp": timestamp,
-                            "og_description": og_description
-                        }
-                        save_additional_data(data)
+                        # timestamp = response.headers.get("Date", "Unknown time")
+                        # data = {
+                        #     "found_keywords": found_keywords,
+                        #     "found_exceptions": found_exceptions,
+                        #     "url": url,
+                        #     "og_title": og_title,
+                        #     "timestamp": timestamp,
+                        #     "og_description": og_description
+                        # }
+                        # save_additional_data(data)
 
                         if not found_exceptions:
                             message = (

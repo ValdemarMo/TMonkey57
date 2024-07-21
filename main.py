@@ -5,6 +5,7 @@ from config import TELEGRAM_BOT_TOKEN
 
 
 async def main():
+
     bot = Bot(token=TELEGRAM_BOT_TOKEN)
     dp = Dispatcher()
 

@@ -80,6 +80,10 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     logging.info("Handlers have been registered")
 
 
+def check_user_id():
+    users = load_users()
+
+
 def user_is_authorized(user_id):
     users = load_users()
     is_authorized = user_id in users or user_id == OWNER_ID
