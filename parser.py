@@ -124,11 +124,11 @@ async def monitor(callback, etimer=0, timer=None):
                     found_keywords = [
                         kw for kw in keywords if kw.lower() in og_description.lower()
                     ]
-                    found_exceptions = [
-                        ex for ex in exceptions if ex.lower() in og_description.lower()
-                    ]
 
                     if found_keywords:
+                        found_exceptions = [
+                            ex for ex in exceptions if ex.lower() in og_description.lower()
+                        ]
                         # timestamp = response.headers.get("Date", "Unknown time")
                         # data = {
                         #     "found_keywords": found_keywords,
