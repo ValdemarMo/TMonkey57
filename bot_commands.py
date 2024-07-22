@@ -504,16 +504,6 @@ async def clear_users(message: types.Message):
     )
 
 
-# async def list_users(message: types.Message):
-#     if message.from_user.id != OWNER_ID:
-#         await message.answer("У вас нет прав на выполнение этой команды.")
-#         return
-#
-#     users = load_users()
-#     await message.answer(f"<b>Пользователи:</b>\n" + "\n".join(map(str, users)),
-#                          parse_mode=ParseMode.HTML)
-
-
 async def list_users(message: types.Message):
     if message.from_user.id != OWNER_ID:
         await message.answer("У вас нет прав на выполнение этой команды.")
@@ -522,6 +512,11 @@ async def list_users(message: types.Message):
     users = load_users()
     user_list = []
     invalid_users = []
+
+    # await message.answer(
+    #     f"<b>Пользователи:</b>\n" + "\n".join(map(str, users)),
+    #     parse_mode=ParseMode.HTML
+    # )
 
     for user_id in users:
         user_name, user_url = await get_user_name(user_id)
