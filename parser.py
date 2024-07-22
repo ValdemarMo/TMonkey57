@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import asyncio
 import logging
 from config import (logging_parser,
+                    add_file,
                     time_stop,
                     depth_key,
                     smoke_break,
@@ -129,16 +130,17 @@ async def monitor(callback, etimer=0, timer=None):
                         found_exceptions = [
                             ex for ex in exceptions if ex.lower() in og_description.lower()
                         ]
-                        # timestamp = response.headers.get("Date", "Unknown time")
-                        # data = {
-                        #     "found_keywords": found_keywords,
-                        #     "found_exceptions": found_exceptions,
-                        #     "url": url,
-                        #     "og_title": og_title,
-                        #     "timestamp": timestamp,
-                        #     "og_description": og_description
-                        # }
-                        # save_additional_data(data)
+                        if add_file:
+                            timestamp = response.headers.get("Date", "Unknown time")
+                            data = {
+                                "found_keywords": str(found_keywords),
+                                "found_exceptions": str(found_exceptions),
+                                "url": url,
+                                "og_title": og_title,
+                                "timestamp": timestamp,
+                                "og_description": og_description
+                            }
+                            save_additional_data(data)
 
                         if not found_exceptions:
                             message = (

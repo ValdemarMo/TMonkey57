@@ -14,7 +14,7 @@ KEYWORDS_FILE_PATH = "data/keywords.json"
 EXCEPTIONS_FILE_PATH = "data/exceptions.json"
 ADD_FILE_PATH = "data/add.json"
 
-add_file = False
+add_file = False #запись найденного в add.json, (!) включая исключения
 logging_parser = False # подробные логи парсинга
 
 # временной цикл мониторинга групп:
