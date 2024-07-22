@@ -14,7 +14,8 @@ KEYWORDS_FILE_PATH = "data/keywords.json"
 EXCEPTIONS_FILE_PATH = "data/exceptions.json"
 ADD_FILE_PATH = "data/add.json"
 
-logging_parser = True # подробные логи парсинга
+add_file = False
+logging_parser = False # подробные логи парсинга
 
 # временной цикл мониторинга групп:
 # максимальная длительность = time_stop * depth_key + smoke_break
