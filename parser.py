@@ -143,7 +143,6 @@ async def monitor(callback, etimer=0, timer=None):
                         if not found_exceptions:
                             message = (
                                 f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
-                                # f"{url}\n"
                                 f'<a href="{url}">{og_title}</a>\n'
                                 f"<b>Запись:</b>\n{og_description}\n"
                             )
