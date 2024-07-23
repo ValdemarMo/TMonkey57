@@ -1,6 +1,7 @@
 import json
 import requests
 from bs4 import BeautifulSoup
+import html
 import asyncio
 import logging
 from config import (logging_parser,
@@ -14,9 +15,7 @@ from config import (logging_parser,
                     ADD_FILE_PATH)
 import datetime
 
-
 monitoring = False
-
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -30,6 +29,7 @@ def load_keywords():
 def save_keywords(keywords):
     with open(KEYWORDS_FILE_PATH, "w", encoding="utf-8") as file:
         json.dump([kw.lower() for kw in keywords], file, ensure_ascii=False, indent=4)
+
 
 def load_exceptions():
     with open(EXCEPTIONS_FILE_PATH, "r", encoding="utf-8") as file:
@@ -69,6 +69,20 @@ def remove_url_numbers(url: str) -> str:
     # return re.sub(r'/\d+$', '', url)
     return f"{url.rstrip('/').rsplit('/', 1)[0]}/"
 
+def check_and_escape_html(text):
+    try:
+        soup = BeautifulSoup(text, "lxml")
+
+        # Проверяем наличие не закрытых или некорректных тегов
+        if soup.find_all(['html', 'body']):
+            raise ValueError("Invalid HTML structure")
+
+        # Если всё корректно, возвращаем текст без изменений
+        return text
+    except Exception as e:
+        # logging.warning(f"Invalid HTML detected: {e}")
+        # Экранируем текст при ошибке
+        return html.escape(text)
 
 async def monitor(callback, etimer=0, timer=None):
     global monitoring
@@ -146,7 +160,7 @@ async def monitor(callback, etimer=0, timer=None):
                             message = (
                                 f"<b>Обнаружено:</b> {', '.join(found_keywords)}\n"
                                 f'<a href="{url}">{og_title}</a>\n'
-                                f"<b>Запись:</b>\n{og_description}\n"
+                                f"<b>Запись:</b>\n{check_and_escape_html(og_description)}\n"
                             )
                             await callback(message)
 

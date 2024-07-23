@@ -80,10 +80,6 @@ def register_handlers(dp: Dispatcher, bot: Bot):
     logging.info("Handlers have been registered")
 
 
-def check_user_id():
-    users = load_users()
-
-
 def user_is_authorized(user_id):
     users = load_users()
     is_authorized = user_id in users or user_id == OWNER_ID
@@ -119,14 +115,15 @@ async def get_user_name(user_id: int):
 async def notify_all_users(bot: Bot, message: str):
     users = load_users()
     for user_id in users:
-        await bot.send_message(
-            user_id, message, disable_web_page_preview=True, parse_mode=ParseMode.HTML
-        )
-        # try:
-        #     await bot.send_message(user_id, message, disable_web_page_preview = True,
-        #                            parse_mode=ParseMode.HTML)
-        # except Exception as e:
-        #     logging.error(f"Failed to send message to {user_id}: {e}")
+        try:
+            # logging.info(f"Sending message to {user_id}: {message}")
+            await bot.send_message(
+                user_id, message,
+                disable_web_page_preview = True,
+                parse_mode=ParseMode.HTML
+            )
+        except Exception as e:
+            logging.error(f"Failed to send message to {user_id}: {e}")
 
 
 async def send_welcome(message: types.Message):
@@ -201,10 +198,8 @@ async def remove_keyword(message: types.Message):
         await message.answer("У вас нет прав на выполнение этой команды.")
         return
     if message.text == "/remove_keyword":
-        await message.answer(
-            f"<b>вы не ввели ключевые слова</b> \n(списком через запятую), попробуйте ещё раз",
-            parse_mode=ParseMode.HTML,
-        )
+        await message.answer(f"<b>вы не ввели ключевые слова</b> \n(списком через запятую), попробуйте ещё раз",
+                             parse_mode=ParseMode.HTML)
         return
     keywords = load_keywords()
     remove_keywords_text = message.text.split(maxsplit=1)[1]
@@ -345,7 +340,7 @@ async def remove_group(message: types.Message):
         return
 
     # Получить текст после команды /remove_group
-    remove_group_name = message.text[len("/remove_group") :].strip()
+    remove_group_name = message.text[len("/remove_group"):].strip()
 
     # Загружаем существующие группы
     groups = load_groups()
@@ -358,7 +353,7 @@ async def remove_group(message: types.Message):
 
     # Отправляем уведомление всем пользователям
     await notify_all_users(message.bot,
-        f"<b>Удалены группы:</b>\n{remove_group_name}")
+                           f"<b>Удалены группы:</b>\n{remove_group_name}")
 
 
 async def list_groups(message: types.Message):
@@ -410,7 +405,8 @@ async def clear_keywords(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_keywords"
     await message.answer(
-        "Вы уверены, что <b>хотите очистить список ключевых слов?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что <b>хотите очистить список ключевых слов?</b> "
+        "Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -422,7 +418,8 @@ async def clear_exceptions(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_exceptions"
     await message.answer(
-        "Вы уверены, что <b>хотите очистить список слов-исключений?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что <b>хотите очистить список слов-исключений?</b> "
+        "Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -434,7 +431,8 @@ async def clear_groups(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_groups"
     await message.answer(
-        "Вы уверены, что хотите очистить список групп? Введите <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что хотите очистить список групп? "
+        "Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
@@ -499,7 +497,8 @@ async def clear_users(message: types.Message):
 
     pending_clear_confirmations[message.from_user.id] = "clear_users"
     await message.answer(
-        "Вы уверены, что <b>хотите удалить всех пользователей?</b> Введите <b>'подтвердить очистку'</b> для подтверждения.",
+        "Вы уверены, что <b>хотите удалить всех пользователей?</b> "
+        "Введите <b>'подтвердить очистку'</b> для подтверждения.",
         parse_mode=ParseMode.HTML,
     )
 
