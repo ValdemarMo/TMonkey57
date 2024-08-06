@@ -53,7 +53,7 @@ async def setup_bot_commands(bot: Bot):
     logging.info("Bot commands have been set")
 
 
-def register_handlers(dp: Dispatcher, bot: Bot):
+def register_handlers(dp: Dispatcher):
     dp.message.register(send_welcome, Command(commands=["start"]))
     dp.message.register(send_help, Command(commands=["help"]))
     dp.message.register(add_keyword, Command(commands=["add_keyword"]))
@@ -119,7 +119,7 @@ async def notify_all_users(bot: Bot, message: str):
             # logging.info(f"Sending message to {user_id}: {message}")
             await bot.send_message(
                 user_id, message,
-                disable_web_page_preview = True,
+                disable_web_page_preview=True,
                 parse_mode=ParseMode.HTML
             )
         except Exception as e:

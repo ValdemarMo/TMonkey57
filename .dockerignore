@@ -6,3 +6,5 @@ Dockerfile
 __pycache__
 *.pyo
 *.pyd
+.env_example
+requirements.txt
